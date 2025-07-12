@@ -74,10 +74,23 @@ export default function AdminPanel() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to access admin panel</h2>
+          <Link to="/auth" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+            Log In
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user.isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
           <p className="text-gray-600 mb-4">You need admin privileges to access this panel</p>
-          <Link to="/login" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
-            Log In
+          <Link to="/dashboard" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+            Go to Dashboard
           </Link>
         </div>
       </div>

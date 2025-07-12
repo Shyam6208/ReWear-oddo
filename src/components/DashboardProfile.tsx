@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
+import Avatar from './Avatar';
 import { User, Mail, MapPin, Calendar, Edit, Camera, Save, X } from 'lucide-react';
 
 export default function DashboardProfile() {
@@ -68,10 +69,10 @@ export default function DashboardProfile() {
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <img
+                    <Avatar
                       src={user.avatar}
                       alt={user.name}
-                      className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
+                      size="xl"
                     />
                     <button className="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                       <Camera className="h-4 w-4" />

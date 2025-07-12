@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useItems } from '../context/ItemsContext';
 import Sidebar from './Sidebar';
-import { Upload, X, Image as ImageIcon, Plus } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Plus, CheckCircle } from 'lucide-react';
+import Notification from './Notification';
 
 const categories = [
   'Tops', 'Bottoms', 'Dresses', 'Outerwear', 'Shoes', 'Accessories', 'Activewear', 'Sleepwear'
@@ -19,25 +21,30 @@ const conditions = [
 ];
 
 export default function AddItem() {
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { addItem } = useItems();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: '',
     size: '',
-    type: 'swap',
+    type: 'swap' as 'swap' | 'donate',
     condition: '',
     tags: ''
   });
   const [images, setImages] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to add items</h2>
-          <Link to="/login" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+          <Link to="/auth" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
             Log In
           </Link>
         </div>
@@ -68,25 +75,76 @@ export default function AddItem() {
     console.log('Files dropped');
   };
 
-  const addImagePlaceholder = () => {
-    const placeholderUrls = [
-      'https://images.pexels.com/photos/996329/pexels-photo-996329.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=2',
-      'https://images.pexels.com/photos/1082528/pexels-photo-1082528.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=2',
-      'https://images.pexels.com/photos/985635/pexels-photo-985635.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=2'
-    ];
-    
-    const newImage = placeholderUrls[images.length % placeholderUrls.length];
-    setImages([...images, newImage]);
+  // Open file dialog
+  const handleChooseFiles = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  // Handle file selection
+  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newImages: string[] = [];
+    for (let i = 0; i < files.length && images.length + newImages.length < 6; i++) {
+      const file = files[i];
+      newImages.push(URL.createObjectURL(file));
+    }
+    setImages([...images, ...newImages]);
   };
 
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData, images);
-    // Handle form submission
+    
+    if (images.length === 0) {
+      alert('Please add at least one image');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Get points from selected condition
+      const selectedCondition = conditions.find(c => c.value === formData.condition);
+      const points = selectedCondition?.points || 0;
+
+      // Parse tags
+      const tags = formData.tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+
+      // Create the item
+      addItem({
+        title: formData.title,
+        description: formData.description,
+        images: images,
+        category: formData.category,
+        size: formData.size,
+        condition: formData.condition,
+        points: points,
+        tags: tags,
+        type: formData.type,
+        status: 'available'
+      });
+
+      setShowSuccess(true);
+      
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+        navigate('/dashboard/items');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error adding item:', error);
+      alert('Failed to add item. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const selectedCondition = conditions.find(c => c.value === formData.condition);
@@ -94,7 +152,15 @@ export default function AddItem() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      
+      {showSuccess && (
+        <Notification
+          type="success"
+          title="Item added successfully!"
+          message="Redirecting to your items..."
+          onClose={() => setShowSuccess(false)}
+          duration={1800}
+        />
+      )}
       <div className="md:ml-64">
         <div className="p-4 md:p-6 pt-16 md:pt-6">
           {/* Header */}
@@ -110,6 +176,15 @@ export default function AddItem() {
                 <div>
                   <label className="block text-sm md:text-base font-medium text-gray-700 mb-3 md:mb-4">Item Images</label>
                   
+                  {/* Hidden file input */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleFilesSelected}
+                  />
                   {/* Image Upload Area */}
                   <div
                     className={`border-2 border-dashed rounded-xl p-6 md:p-8 text-center transition-colors ${
@@ -123,7 +198,7 @@ export default function AddItem() {
                     <p className="text-sm md:text-base text-gray-600 mb-2">Drag and drop images here, or</p>
                     <button
                       type="button"
-                      onClick={addImagePlaceholder}
+                      onClick={handleChooseFiles}
                       className="bg-green-500 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base"
                     >
                       Choose Files
@@ -153,7 +228,7 @@ export default function AddItem() {
                       {images.length < 6 && (
                         <button
                           type="button"
-                          onClick={addImagePlaceholder}
+                          onClick={handleChooseFiles}
                           className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-green-400 transition-colors"
                         >
                           <Plus className="h-6 w-6 md:h-8 md:w-8 text-gray-400" />
@@ -324,9 +399,17 @@ export default function AddItem() {
                 <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-4 md:pt-6">
                   <button
                     type="submit"
-                    className="flex-1 bg-green-500 text-white py-3 px-4 md:px-6 rounded-lg font-semibold hover:bg-green-600 transition-colors text-sm md:text-base"
+                    disabled={isSubmitting}
+                    className="flex-1 bg-green-500 text-white py-3 px-4 md:px-6 rounded-lg font-semibold hover:bg-green-600 transition-colors text-sm md:text-base disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    List Item
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Adding Item...
+                      </>
+                    ) : (
+                      'List Item'
+                    )}
                   </button>
                   <Link
                     to="/dashboard"

@@ -1,67 +1,115 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  signInWithPopup,
+  updateProfile,
+  User as FirebaseUser
+} from 'firebase/auth';
+import { auth, googleProvider } from '../firebase';
 
 interface User {
   id: string;
   name: string;
   email: string;
   points: number;
-  avatar?: string;
+  avatar: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>({
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    points: 150,
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2'
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // Convert Firebase user to our User interface
+        const userData: User = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          email: firebaseUser.email || '',
+          points: 150, // Default points for new users
+          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User')}&background=10b981&color=fff&size=200`,
+          isAdmin: firebaseUser.email === 'admin@rewear.com'
+        };
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setUser({
-      id: '1',
-      name: 'Sarah Johnson',
-      email,
-      points: 150,
-      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2'
-    });
-    setIsLoading(false);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      throw new Error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signup = async (name: string, email: string, password: string) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setUser({
-      id: '1',
-      name,
-      email,
-      points: 50,
-      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2'
-    });
-    setIsLoading(false);
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      // Update the user's display name
+      if (result.user) {
+        await updateProfile(result.user, { displayName: name });
+      }
+    } catch (error: any) {
+      console.error('Signup failed:', error);
+      throw new Error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error: any) {
+      console.error('Google login failed:', error);
+      throw new Error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await signOut(auth);
+    } catch (error: any) {
+      console.error('Logout failed:', error);
+      throw new Error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, signup, loginWithGoogle, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

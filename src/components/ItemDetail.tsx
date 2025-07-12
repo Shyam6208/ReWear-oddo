@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useItems } from '../context/ItemsContext';
+import Avatar from './Avatar';
 import { 
   Heart, 
   Share2, 
@@ -47,13 +49,14 @@ export default function ItemDetail() {
   const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isLiked, setIsLiked] = useState(mockItem.isLiked);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to view item details</h2>
-          <Link to="/login" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+          <Link to="/auth" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
             Log In
           </Link>
         </div>
@@ -63,6 +66,15 @@ export default function ItemDetail() {
 
   const handleLike = () => {
     setIsLiked(!isLiked);
+  };
+
+  const handleWishlist = () => {
+    setIsInWishlist(!isInWishlist);
+    if (!isInWishlist) {
+      alert('Added to wishlist!');
+    } else {
+      alert('Removed from wishlist!');
+    }
   };
 
   return (
@@ -84,6 +96,14 @@ export default function ItemDetail() {
                 }`}
               >
                 <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+              </button>
+              <button
+                onClick={handleWishlist}
+                className={`p-2 rounded-full transition-colors ${
+                  isInWishlist ? 'text-blue-500 bg-blue-50' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'
+                }`}
+              >
+                <Star className={`h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} />
               </button>
               <button className="p-2 rounded-full text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors" onClick={() => alert('Share item!')}>
                 <Share2 className="h-5 w-5" />
@@ -191,10 +211,10 @@ export default function ItemDetail() {
               </div>
               
               <div className="flex items-start space-x-3 md:space-x-4">
-                <img
+                <Avatar
                   src={mockItem.uploader.avatar}
                   alt={mockItem.uploader.name}
-                  className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
+                  size="lg"
                 />
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900 mb-1 text-sm md:text-base">{mockItem.uploader.name}</h4>

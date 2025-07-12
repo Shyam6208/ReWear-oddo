@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
-import { Edit, Trash2, Eye, Star, Clock, CheckCircle } from 'lucide-react';
+import { Edit, Trash2, Eye, Star, Clock, CheckCircle, ShoppingBag, TrendingUp, Award, Plus } from 'lucide-react';
+import { NoItemsEmptyState } from './EmptyState';
 
 const mockItems = [
   {
@@ -12,7 +13,8 @@ const mockItems = [
     status: 'available',
     points: 25,
     views: 12,
-    likes: 3
+    likes: 3,
+    category: 'Outerwear'
   },
   {
     id: 2,
@@ -21,7 +23,8 @@ const mockItems = [
     status: 'pending',
     points: 30,
     views: 8,
-    likes: 5
+    likes: 5,
+    category: 'Dresses'
   },
   {
     id: 3,
@@ -30,7 +33,8 @@ const mockItems = [
     status: 'swapped',
     points: 35,
     views: 24,
-    likes: 8
+    likes: 8,
+    category: 'Sweaters'
   }
 ];
 
@@ -40,10 +44,10 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to access your dashboard</h2>
-          <Link to="/login" className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+        <div className="text-center animate-fadeIn">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Please log in to access your dashboard</h2>
+          <Link to="/auth" className="btn-primary px-8 py-4 text-lg">
             Log In
           </Link>
         </div>
@@ -58,7 +62,7 @@ export default function Dashboard() {
       case 'pending':
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'swapped':
-        return <Star className="h-4 w-4 text-blue-500" />;
+        return <Award className="h-4 w-4 text-blue-500" />;
       default:
         return null;
     }
@@ -67,136 +71,154 @@ export default function Dashboard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'available':
-        return 'bg-green-100 text-green-800';
+        return 'status-available';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'status-pending';
       case 'swapped':
-        return 'bg-blue-100 text-blue-800';
+        return 'status-swapped';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
       <Sidebar />
       
       <div className="md:ml-64">
-        <div className="p-4 md:p-6 pt-16 md:pt-6">
+        <div className="p-6 md:p-8 pt-20 md:pt-8">
           {/* Header */}
-          <div className="mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Welcome back, {user.name}!</h1>
-            <p className="text-sm md:text-base text-gray-600">Manage your items and track your swapping activity</p>
+          <div className="mb-8 animate-fadeIn">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Welcome back, {user.name}! 👋</h1>
+                <p className="text-lg text-gray-600">Manage your items and track your swapping activity</p>
+              </div>
+              <Link to="/store" className="btn-primary px-6 py-3 text-base flex items-center">
+                <ShoppingBag className="h-5 w-5 mr-2" />
+                Browse Store
+              </Link>
+            </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="card p-6 animate-fadeIn">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Total Items</p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">{mockItems.length}</p>
+                  <p className="text-sm text-gray-600 font-medium">Total Items</p>
+                  <p className="text-2xl md:text-3xl font-bold text-gray-900">{mockItems.length}</p>
                 </div>
-                <div className="bg-green-100 p-2 md:p-3 rounded-full">
-                  <Eye className="h-4 w-4 md:h-6 md:w-6 text-green-600" />
+                <div className="bg-green-100 p-3 rounded-xl">
+                  <Eye className="h-6 w-6 text-green-600" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+            <div className="card p-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Points Balance</p>
-                  <p className="text-xl md:text-2xl font-bold text-green-600">{user.points}</p>
+                  <p className="text-sm text-gray-600 font-medium">Points Balance</p>
+                  <p className="text-2xl md:text-3xl font-bold text-green-600">{user.points}</p>
                 </div>
-                <div className="bg-green-100 p-2 md:p-3 rounded-full">
-                  <Star className="h-4 w-4 md:h-6 md:w-6 text-green-600" />
+                <div className="bg-green-100 p-3 rounded-xl">
+                  <Star className="h-6 w-6 text-green-600" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+            <div className="card p-6 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Successful Swaps</p>
-                  <p className="text-xl md:text-2xl font-bold text-blue-600">8</p>
+                  <p className="text-sm text-gray-600 font-medium">Successful Swaps</p>
+                  <p className="text-2xl md:text-3xl font-bold text-blue-600">8</p>
                 </div>
-                <div className="bg-blue-100 p-2 md:p-3 rounded-full">
-                  <CheckCircle className="h-4 w-4 md:h-6 md:w-6 text-blue-600" />
+                <div className="bg-blue-100 p-3 rounded-xl">
+                  <CheckCircle className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+            <div className="card p-6 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Total Views</p>
-                  <p className="text-xl md:text-2xl font-bold text-purple-600">44</p>
+                  <p className="text-sm text-gray-600 font-medium">Total Views</p>
+                  <p className="text-2xl md:text-3xl font-bold text-purple-600">44</p>
                 </div>
-                <div className="bg-purple-100 p-2 md:p-3 rounded-full">
-                  <Eye className="h-4 w-4 md:h-6 md:w-6 text-purple-600" />
+                <div className="bg-purple-100 p-3 rounded-xl">
+                  <TrendingUp className="h-6 w-6 text-purple-600" />
                 </div>
               </div>
             </div>
           </div>
 
           {/* My Items Section */}
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-4 md:p-6 border-b border-gray-200">
+          <div className="card animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+            <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-semibold text-gray-900">My Items</h2>
-                <Link to="/add-item" className="bg-green-500 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">My Items</h2>
+                <Link to="/add-item" className="btn-primary px-4 py-2 text-sm flex items-center">
+                  <Plus className="h-4 w-4 mr-2" />
                   Add New Item
                 </Link>
               </div>
             </div>
             
-            <div className="p-4 md:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {mockItems.map((item) => (
-                  <div key={item.id} className="bg-gray-50 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-square overflow-hidden">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-3 md:p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">{item.title}</h3>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-green-600 font-bold text-sm md:text-base">{item.points} points</span>
-                        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
-                          {getStatusIcon(item.status)}
-                          <span className="capitalize">{item.status}</span>
+            <div className="p-6">
+              {mockItems.length === 0 ? (
+                <NoItemsEmptyState onAddItem={() => window.location.href = '/add-item'} />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {mockItems.map((item, index) => (
+                    <div key={item.id} className="card card-hover overflow-hidden animate-fadeIn" style={{ animationDelay: `${0.5 + index * 0.1}s` }}>
+                      <div className="aspect-square overflow-hidden relative">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute top-3 left-3">
+                          <span className="badge badge-primary">{item.category}</span>
+                        </div>
+                        <div className="absolute top-3 right-3">
+                          <div className={`badge ${getStatusColor(item.status)}`}>
+                            {getStatusIcon(item.status)}
+                            <span className="ml-1 capitalize">{item.status}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                        <span className="flex items-center space-x-1">
-                          <Eye className="h-3 w-3 md:h-4 md:w-4" />
-                          <span className="text-xs md:text-sm">{item.views} views</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <Star className="h-3 w-3 md:h-4 md:w-4" />
-                          <span className="text-xs md:text-sm">{item.likes} likes</span>
-                        </span>
-                      </div>
-                      <div className="flex space-x-1 md:space-x-2">
-                        <Link to={`/item/${item.id}`} className="flex-1 bg-gray-200 text-gray-700 px-2 md:px-3 py-2 rounded-lg text-center text-xs md:text-sm hover:bg-gray-300 transition-colors">
-                          View
-                        </Link>
-                        <button className="flex-1 bg-blue-500 text-white px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm hover:bg-blue-600 transition-colors flex items-center justify-center" onClick={() => alert(`Edit item: ${item.title}`)}>
-                          <Edit className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                          Edit
-                        </button>
-                        <button className="bg-red-500 text-white px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm hover:bg-red-600 transition-colors" onClick={() => alert(`Delete item: ${item.title}`)}>
-                          <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
-                        </button>
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-900 mb-3 text-lg">{item.title}</h3>
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-green-600 font-bold text-lg">{item.points} points</span>
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <span className="flex items-center space-x-1">
+                              <Eye className="h-4 w-4" />
+                              <span>{item.views}</span>
+                            </span>
+                            <span className="flex items-center space-x-1">
+                              <Star className="h-4 w-4" />
+                              <span>{item.likes}</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Link to={`/item/${item.id}`} className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-center text-sm font-medium hover:bg-gray-200 transition-colors">
+                            View
+                          </Link>
+                          <button className="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors flex items-center justify-center" onClick={() => alert(`Edit item: ${item.title}`)}>
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </button>
+                          <button className="bg-red-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors" onClick={() => alert(`Delete item: ${item.title}`)}>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
